@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Javascript - Shallow Copy and Deep Copy
+title: Shallow Copy and Deep Copy
 date: 2020-04-19 13:32:20 +0300
 description: You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. # Add post description (optional)
 img: i-rest.jpg # Add image post (optional)
