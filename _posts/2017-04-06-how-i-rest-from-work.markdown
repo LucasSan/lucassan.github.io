@@ -17,8 +17,8 @@ It makes a copy of all the members of the source object, allocates different mem
 
 ```
 const sourceObj = {
-	name: ‘Lucas’,
-	age: 31,
+    name: ‘Lucas’,
+    age: 31,
 };
 const target = sourceObj;
 ```
