@@ -38,3 +38,5 @@ const target = {
 ```
 
 Now if you change target.name, it will only affect target and not sourceObj
+
+![Macbook]({{site.baseurl}}/assets/img/mac.jpg)
