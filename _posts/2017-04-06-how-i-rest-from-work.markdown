@@ -13,7 +13,7 @@ It makes a copy of the reference to source object into the target object. Think 
 ## Deep Copy
 It makes a copy of all the members of the source object, allocates different memory locations for the target object and then assigns the copied members to this target object to achieve deep copy. In this way, if the source object vanishes, the target object still valid in the memory.
 
-Example Shallow Copy:
+## Example Shallow Copy:
 
 ```
 const sourceObj = {
