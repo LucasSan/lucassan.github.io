@@ -7,11 +7,21 @@ img: i-rest.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
 tags: [Javascript]
 ---
+
+Have you ever wonder how objects are cloned or copied ?
+
+[I'll assume that you said no]
+
+So, let me introduce you how a Shallow Copy and a Deep Copy works and the difference between them
+
+[Drumrolls begin]
+
 ## Shallow Copy
-It makes a copy of the reference to source object into the target object. Think about it as a copy of the source object address. So, the addresses of the source object and target object will be the same i.e. they will be pointing to the same memory location.
+It basically get the reference from the source object and put into the target object.
+Think about it as a copy of the source object address. So, the addresses of the source object and target object will be the same i.e. they will be pointing to the same memory location.
 
 ## Deep Copy
-It makes a copy of all the members of the source object, allocates different memory locations for the target object and then assigns the copied members to this target object to achieve deep copy. In this way, if the source object vanishes, the target object still valid in the memory.
+It basically makes a copy of all the members of the source object, allocates different memory locations for the target object and then assigns the copied members to this target object to achieve deep copy. In this way, if the source object vanishes, the target object still valid in the memory.
 
 ### Example Shallow Copy:
 
@@ -37,6 +47,51 @@ const target = {
 };
 ```
 
-Now if you change target.name, it will only affect target and not sourceObj
+Now if you change target.name, it will only affect target and not sourceObj.
 
-![Shallow]({{site.baseurl}}/assets/img/shallow_deep_copy.png)
+<center>![Shallow]({{site.baseurl}}/assets/img/shallow_deep_copy.png)</center>
+
+But I think we can go further in this explanation if we think about primitives types in Javascript.
+
+What are the primitive types in Javascript !? 
+
+Well we can say that primitive types in Javascript are 
+- `number`
+- `string`
+- `boolean`
+- `null`
+- `undefined`
+- `Symbol`
+
+All the others data types in Javascript are objects, like
+- `Objects`
+- `Functions`
+- `Arrays`
+- `Regex`
+etc
+
+Two rules over here:
+1. Primitives types are passed by value, and are immutable.
+2. Object are passed by reference, and are mutables.
+
+So, if you make something like
+
+```
+const object1 = {}
+const object2 = {}
+console.log(object1 === object2) // false
+```
+
+this is happening because when you create a constant with `{}`, this will make Javascript allocate a piece of memory to it. So object1 has a piece of memory, and object2 has another piece of memory, so they are two different objects, and then when you ask if object1 is equal to object2, the answer is false.
+
+And now, if you make something like
+
+```
+const object1 = {}
+const object2 = object1
+console.log(object1 === object2) // true
+```
+
+this one will be true because object2 has a reference to object1 memory address (like we saw in Shallow Copy).
+
+Any questions, opinions or insults !? show your love in comments section, see ya! ;)
