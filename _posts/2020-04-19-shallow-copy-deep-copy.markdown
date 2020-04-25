@@ -49,7 +49,7 @@ const target = {
 
 Now if you change target.name, it will only affect target and not sourceObj.
 
-<p style="text-align: center;">![Shallow]({{site.baseurl}}/assets/img/shallow_deep_copy.png)</p>
+![Shallow]({{site.baseurl}}/assets/img/shallow_deep_copy.png)
 
 But I think we can go further in this explanation if we think about primitives types in Javascript.
 
