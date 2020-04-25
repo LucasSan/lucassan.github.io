@@ -68,7 +68,6 @@ All the others data types in Javascript are objects, like
 - `Functions`
 - `Arrays`
 - `Regex`
-etc
 
 Two rules over here:
 1. Primitives types are passed by value, and are immutable.
