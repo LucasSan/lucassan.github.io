@@ -94,4 +94,4 @@ console.log(object1 === object2) // true
 
 this one will be true because object2 has a reference to object1 memory address (like we saw in Shallow Copy).
 
-Any questions, opinions or insults !? show your love in comments section, see ya! ;)
+Any questions, opinions or insults !? ;)
