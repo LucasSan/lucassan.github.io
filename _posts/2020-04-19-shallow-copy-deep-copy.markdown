@@ -10,11 +10,11 @@ tags: [Javascript]
 
 Have you ever wonder how objects are cloned or copied ?
 
-[I'll assume that you said no]
+*[I'll assume that you said no]*
 
 So, let me introduce you how a Shallow Copy and a Deep Copy works and the difference between them
 
-[Drumrolls begin]
+*[Drumrolls begin]*
 
 ## Shallow Copy
 It basically get the reference from the source object and put into the target object.
@@ -93,4 +93,4 @@ console.log(object1 === object2) // true
 
 this one will be true because object2 has a reference to object1 memory address (like we saw in Shallow Copy).
 
-Any questions, opinions or insults !? ;)
+*Any questions, opinions or insults !? ;)*
