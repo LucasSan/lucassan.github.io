@@ -10,7 +10,7 @@ tags: [Javascript]
 
 *[May I have your attention please]*
 
-Before start to talk (or write) about the difference between Var, Let and Const, we need to know two main concepts called Scope and Block, and to explain this I need your full atention please.
+Before we start to talk (or write) about the difference between Var, Let and Const, we need to know two main concepts called Scope and Block, and to explain this I need your full atention please.
 
 ## So, what is Scope ?
 
