@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The One with Queue Theory
-date: 2020-06-06 15:07:00 +0300
+date: 2021-06-06 15:07:00 +0300
 description: You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. # Add post description (optional)
 img: we-in-rest.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
