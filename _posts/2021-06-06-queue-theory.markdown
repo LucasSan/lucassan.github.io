@@ -60,56 +60,44 @@ A checkin in an airport, where the employee of the Airline is the server.
 
 ```(a/b/c) : (d/e/f)```
 
-a: Arrival distribution
+**a:** Arrival distribution
   - *M = Poisson arrival*
   - *D = Deterministic arrival*
   - *Ek = Erlangian/Gamma arrival*
   - *GI = General Independent distribution*
-  - *G = General distribution*
-b: Departure Distribution
-c: Services Channels
-  - *Number of servers*
-d: Services Disciplines
-  - *FCFS - LCFS - SRO - GD*
-e: Maximum number of customers allowed in the system
-  - *finite or infinite*
-f: Calling source
+  - *G = General distribution*  
+**b:** Departure Distribution  
+  - *Number of servers*  
+**d:** Services Disciplines  
+  - *FCFS - LCFS - SRO - GD*  
+**e:** Maximum number of customers allowed in the system  
+  - *finite or infinite*  
+**f:** Calling source  
   - *finite or infinte*
 
 ### Symbols
-- ƛ
-  *Arrival rate*
-- 𝜇
-  *Service rate per busy server*
-  ⍴: ƛ / 𝜇
-  *Utilization factor*
-- n
-  *Number of units in the system*
-- Pn(t)
-  *Probability of exactly n customers in the system at time t*
-- Pn
-  *Probability of exactly n customers in the system*
-- c
-  *Number of parallel servers*
-- Ws
-  *Expected waiting time per customer in the system*
-- Wq
-  *Expected waiting time per customer in the queue*
-- Ls
-  *Expected number of customers in the system*
-- Lq
-  *Expected number of customers in the queue*
-
+- **ƛ**: *Arrival rate*  
+- **𝜇**: *Service rate per busy server*  
+  ⍴: ƛ / 𝜇  
+  *Utilization factor*  
+- **n**: *Number of units in the system*  
+- **Pn(t)**: *Probability of exactly n customers in the system at time t*  
+- **Pn**: *Probability of exactly n customers in the system*  
+- **c**: *Number of parallel servers*  
+- **Ws**: *Expected waiting time per customer in the system*  
+- **Wq**: *Expected waiting time per customer in the queue*  
+- **Ls**: *Expected number of customers in the system*  
+- **Lq**: *Expected number of customers in the queue*  
 ### Exercise
 A Checkin flow of an airline company has one employee which can serve 6 customers per hour. Customers arrive at the airline company at a rate of 10 per hour which is exponentially distributed.
 
-(a/b/c) : (d/e/f)
-(M/M/1) : (FCFS / infinite / infinite)
-M: distributed (Markov)
-M: distributed (Markov)
-1: we have only one employee, so 1
-FCFS: First Come, First Served
-infinite: entire population
+(a/b/c) : (d/e/f)  
+(M/M/1) : (FCFS / infinite / infinite)  
+M: distributed (Markov)  
+M: distributed (Markov)  
+1: we have only one employee, so 1  
+FCFS: First Come, First Served  
+infinite: entire population  
 
 **ƛ = Arrival rate**
 ```
