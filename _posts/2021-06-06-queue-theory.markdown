@@ -87,7 +87,8 @@ A checkin in an airport, where the employee of the Airline is the server.
 - **Ws**: *Expected waiting time per customer in the system*  
 - **Wq**: *Expected waiting time per customer in the queue*  
 - **Ls**: *Expected number of customers in the system*  
-- **Lq**: *Expected number of customers in the queue*  
+- **Lq**: *Expected number of customers in the queue*
+
 ### Exercise
 A Checkin flow of an airline company has one employee which can serve 6 customers per hour. Customers arrive at the airline company at a rate of 10 per hour which is exponentially distributed.
 
