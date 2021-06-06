@@ -41,10 +41,10 @@ The goal is to reduce its adverse impact to "Tolerable" levels
 ### Examples
 A checkin in an airport, where the employee of the Airline is the server.
 
-**Service Time:** Amount of time that the employee would take to serve you.
-**Arrival distribution:** Poisson distribution (Markov)
-**Queue size:** Can be finite or infinite
-**Queue discipline:**
+**Service Time:** Amount of time that the employee would take to serve you.  
+**Arrival distribution:** Poisson distribution (Markov)  
+**Queue size:** Can be finite or infinite  
+**Queue discipline:**  
   - FCFS (First Come, First Served)
   - LCFS (Last Come, First Served)
   - Service in Random Order (SRO)
