@@ -92,8 +92,8 @@ A checkin in an airport, where the employee of the Airline is the server.
 ### Exercise
 A Checkin flow of an airline company has one employee which can serve 6 customers per hour. Customers arrive at the airline company at a rate of 10 per hour which is exponentially distributed.
 
-(a/b/c) : (d/e/f)  
-(M/M/1) : (FCFS / infinite / infinite)  
+**(a/b/c) : (d/e/f)**  
+**(M/M/1) : (FCFS / infinite / infinite)**  
 M: distributed (Markov)  
 M: distributed (Markov)  
 1: we have only one employee, so 1  
