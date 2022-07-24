@@ -1,0 +1,507 @@
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Lucas Santos</title><link>https://lucassan.github.io/</link><description>Recent content on Lucas Santos</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 24 Jul 2022 14:50:00 +0300</lastBuildDate><atom:link href="https://lucassan.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Aplicacao CRUD Serverless com AWS CDK - Parte 2</title><link>https://lucassan.github.io/2022-07-24-aplicacao-crud-cdk/</link><pubDate>Sun, 24 Jul 2022 14:50:00 +0300</pubDate><guid>https://lucassan.github.io/2022-07-24-aplicacao-crud-cdk/</guid><description>Lucas Santos https://lucassan.github.io/2022-07-24-aplicacao-crud-cdk/ -&lt;h1 id="aplicação-crud-serverless-com-aws-cdk---parte-2">Aplicação CRUD Serverless com AWS CDK - Parte 2&lt;/h1>
+&lt;p>O objetivo será construir um CRUD através de uma arquitetura simples, onde criaremos um API Gateway, e pra cada verbo HTTP usado ao invocar o endpoint desse API Gateway, será chamada uma função lambda, e a função irá ter acesso a um banco de dados que também iremos criar.&lt;/p>
+&lt;p>&lt;img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/3f7e22f9-b2e7-4748-b319-da4152a801c7/Screenshot_2022-07-22_at_11.21.32.png" alt="Screenshot 2022-07-22 at 11.21.32.png">&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Pré&lt;/span>&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#a6e22e">requisitos&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">-&lt;/span> &lt;span style="color:#a6e22e">Aplicação&lt;/span> &lt;span style="color:#a6e22e">CRUD&lt;/span> &lt;span style="color:#a6e22e">Serverless&lt;/span> &lt;span style="color:#a6e22e">com&lt;/span> &lt;span style="color:#a6e22e">AWS&lt;/span> &lt;span style="color:#a6e22e">CDK&lt;/span> &lt;span style="color:#f92672">-&lt;/span> &lt;span style="color:#a6e22e">Parte&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">-&lt;/span> &lt;span style="color:#a6e22e">Ambiente&lt;/span> &lt;span style="color:#a6e22e">aws&lt;/span> &lt;span style="color:#a6e22e">configurado&lt;/span> (&lt;span style="color:#a6e22e">aws&lt;/span> &lt;span style="color:#a6e22e">configure&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">-&lt;/span> &lt;span style="color:#a6e22e">Instalar&lt;/span> &lt;span style="color:#a6e22e">o&lt;/span> &lt;span style="color:#a6e22e">aws&lt;/span>&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#a6e22e">cdk&lt;/span> &lt;span style="color:#66d9ef">package&lt;/span> &lt;span style="color:#a6e22e">com&lt;/span> &lt;span style="color:#e6db74">`npm i aws-cdk`&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Então vamos abrir nosso terminal, no meu caso estou usando o iTerm2, e numa pasta de sua preferência onde iremos criar nosso projeto, iremos dar o comando&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">cdk&lt;/span> &lt;span style="color:#a6e22e">init&lt;/span> &lt;span style="color:#f92672">--&lt;/span>&lt;span style="color:#a6e22e">language&lt;/span> &lt;span style="color:#a6e22e">typescript&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>esse comando irá criar toda uma estrutura básica pra funcionamento do nosso projeto, vamos abrir no Visual Studio pra vermos como ficou a estrutura criada&lt;/p>
+&lt;p>Então minha ideia aqui é criar uma pastinha chamada &lt;code>lambda&lt;/code> e dentro dela vamos criar nossas funções lambdas que ficarão separadas em quatro arquivos.&lt;/p>
+&lt;p>Primeiro arquivo que vamos criar então dentro da pasta &lt;code>lambda&lt;/code> será para criar orders, vamos dar o nome de &lt;code>create-orders.js&lt;/code> e a princípio vamos deixar essa função o mais simples possível, depois a gente volta refatorando pra começar a dar mais responsabilidades a nossa função&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">exports&lt;/span>.&lt;span style="color:#a6e22e">main&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> &lt;span style="color:#66d9ef">function&lt;/span> (&lt;span style="color:#a6e22e">event&lt;/span>, &lt;span style="color:#a6e22e">context&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">statusCode&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#ae81ff">201&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">body&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;new register Yay!&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>bem simples, sempre irá retornar um status 201 (Created), com a mensagem “new register Yay!”&lt;/p>
+&lt;p>Agora vamos criar nossos próximos arquivos seguindo o mesmo modelo simples, e refatoramos depois pra adicionar funcionalidades a essas funções&lt;/p>
+&lt;p>Criar o arquivo &lt;code>delete-orders.js&lt;/code> com código bem semelhante, todos eles na verdade terão um código semelhante, e depois refatoramos&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">exports&lt;/span>.&lt;span style="color:#a6e22e">main&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> &lt;span style="color:#66d9ef">function&lt;/span> (&lt;span style="color:#a6e22e">event&lt;/span>, &lt;span style="color:#a6e22e">context&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">statusCode&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#ae81ff">200&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">body&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;order deleted&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Agora vamos criar o arquivo &lt;code>get-orders.js&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">exports&lt;/span>.&lt;span style="color:#a6e22e">main&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> &lt;span style="color:#66d9ef">function&lt;/span> (&lt;span style="color:#a6e22e">event&lt;/span>, &lt;span style="color:#a6e22e">context&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">statusCode&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#ae81ff">200&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">body&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;all orders here&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>e por fim, criaremos um último arquivo que irá conter a função de update, arquivo vamos chama-lo de &lt;code>update-orders.js&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">exports&lt;/span>.&lt;span style="color:#a6e22e">main&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> &lt;span style="color:#66d9ef">function&lt;/span> (&lt;span style="color:#a6e22e">event&lt;/span>, &lt;span style="color:#a6e22e">context&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">statusCode&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#ae81ff">200&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">body&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;order updated&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Arquivos criados, funções criadas, e agora? próximo passo então será criar um arquivo dentro da pasta &lt;code>lib&lt;/code>, e nesse arquivo vamos concentrar a lógica pra criar a arquitetura de nossa aplicação usando o AWS CDK&lt;/p>
+&lt;p>Então, vamos dar um nome ao nosso arquivo, vou colocar o nome de &lt;code>order-service.ts&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>essa é a estrutura inicial de um &lt;code>Construct&lt;/code> , então vamos fazer uma listinha do que precisamos fazer agora&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 6. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>com isso, vamos ao primeiro item da lista&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">import&lt;/span> { &lt;span style="color:#a6e22e">Code&lt;/span>, Function, &lt;span style="color:#a6e22e">Runtime&lt;/span> } &lt;span style="color:#a6e22e">from&lt;/span> &lt;span style="color:#e6db74">&amp;#34;aws-cdk-lib/aws-lambda&amp;#34;&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerGet&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;GetOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>), &lt;span style="color:#75715e">// pasta onde esta as lambdas
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;get-orders.main&amp;#34;&lt;/span>, &lt;span style="color:#75715e">// nome do arquivo.nome do metodo exportado
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 6. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Então vamos ver o que está acontecendo aqui, pra declarar ou registrar a função lambda que criamos ele vai pedir um, que é o mesmo que temos no nosso constructor no início da nossa classe, então vamos passar o &lt;code>this&lt;/code> depois passamos um &lt;code>id&lt;/code> pra nossa função e depois algumas props, que será &lt;code>runtime, code e handler&lt;/code> (há muitas outras props que podemos passar aqui, mas vou trabalhar com essas 3 apenas, pra manter o código num cenário simples.&lt;/p>
+&lt;p>O &lt;code>runtime&lt;/code> é a versão do ambiente, do node, na qual você irá fazer o upload dessa função pro ambiente da AWS, já o &lt;code>code&lt;/code> é simplesmente a pasta onde colocamos nossas funções lambda, no nosso caso foi na pastinha que demos o nome de &lt;code>lambda&lt;/code>, e o &lt;code>handler&lt;/code> onde iremos informar o nome do arquivo e o nome do método exportado no arquivo.&lt;/p>
+&lt;p>Agora vamos registrar as outras funções lambdas que criamos&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerGet&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;GetOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>), &lt;span style="color:#75715e">// pasta onde esta as lambdas
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;get-orders.main&amp;#34;&lt;/span>, &lt;span style="color:#75715e">// nome do arquivo.nome do metodo exportado
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerPost&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;CreateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerDelete&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;DeleteOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerUpdate&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;UpdateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// 6. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Bom, registramos nossas lambdas no nosso constructor, mas ainda não temos um API Gateway, e também não associamos os verbos HTTP a sua respectiva função, como por exemplo, o GET tem que chamar a meu lambda responsável por buscar as orders, certo?&lt;/p>
+&lt;p>Então vamos para o passo 5, que é criar um API Gateway&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerGet&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;GetOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>), &lt;span style="color:#75715e">// pasta onde esta as lambdas
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;get-orders.main&amp;#34;&lt;/span>, &lt;span style="color:#75715e">// nome do arquivo.nome do metodo exportado
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerPost&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;CreateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerDelete&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;DeleteOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerUpdate&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;UpdateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">api&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">RestApi&lt;/span>(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;orders-api&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">restApiName&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;OrdersService&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">description&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;REST API Gateway pra Orders&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 6. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>API Gateway criada, setamos um &lt;code>restApiName&lt;/code> e uma &lt;code>description&lt;/code> a ela, vamos agora associar os métodos &lt;code>GET&lt;/code>, &lt;code>POST&lt;/code>, &lt;code>DELETE&lt;/code> e &lt;code>PUT&lt;/code> a uma função lambda que já criamos&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerGet&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;GetOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>), &lt;span style="color:#75715e">// pasta onde esta as lambdas
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;get-orders.main&amp;#34;&lt;/span>, &lt;span style="color:#75715e">// nome do arquivo.nome do metodo exportado
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerPost&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;CreateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerDelete&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;DeleteOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerUpdate&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;UpdateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">api&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">RestApi&lt;/span>(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;orders-api&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">restApiName&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;OrdersService&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">description&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;REST API Gateway pra Orders&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 6. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">api&lt;/span>.&lt;span style="color:#a6e22e">root&lt;/span>.&lt;span style="color:#a6e22e">addMethod&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;GET&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">handlerGet&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Podemos ver um erro,&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Argument&lt;/span> &lt;span style="color:#a6e22e">type&lt;/span> &lt;span style="color:#e6db74">&amp;#39;Function&amp;#39;&lt;/span> &lt;span style="color:#a6e22e">is&lt;/span> &lt;span style="color:#a6e22e">not&lt;/span> &lt;span style="color:#a6e22e">assingable&lt;/span> &lt;span style="color:#a6e22e">to&lt;/span> &lt;span style="color:#a6e22e">parameter&lt;/span> &lt;span style="color:#66d9ef">of&lt;/span> &lt;span style="color:#a6e22e">type&lt;/span> &lt;span style="color:#e6db74">&amp;#39;Integration&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>em outras palavras, ele esperava um parâmetro do tipo &lt;code>Integration&lt;/code> e eu passei uma função que criamos logo acima, então por isso ele fala “opa espera aí, você me passou uma função e eu espero receber uma integration”, e isso faz sentido, pois ao abrir o Console da AWS, na parte de API Gateway, vou pegar um aqui que já tenho, existe um passo chamado Integration Request e depois sim vem o Lambda Function.&lt;/p>
+&lt;p>&lt;img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b88b675a-1550-4fb5-8085-0a8e76f97293/Screenshot_2022-07-23_at_16.55.15.png" alt="Screenshot 2022-07-23 at 16.55.15.png">&lt;/p>
+&lt;p>então vamos criar essa integration que ele pede, vou adicionar um novo passo no nosso código&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">OrdersService&lt;/span> &lt;span style="color:#66d9ef">extends&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">constructor&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Construct&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">string&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">super&lt;/span>(&lt;span style="color:#a6e22e">scope&lt;/span>, &lt;span style="color:#a6e22e">id&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. Registrar nossa lambda de buscar orders - GET
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerGet&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;GetOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>), &lt;span style="color:#75715e">// pasta onde esta as lambdas
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;get-orders.main&amp;#34;&lt;/span>, &lt;span style="color:#75715e">// nome do arquivo.nome do metodo exportado
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. Registrar nossa lambda de criar orders - POST
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerPost&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;CreateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 3. Registrar nossa lambda de deletar orders - DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerDelete&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;DeleteOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 4. Registrar nossa lambda de atualizar orders - UPDATE
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">handlerUpdate&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> Function(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;UpdateOrdersHandler&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">runtime&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Runtime&lt;/span>.&lt;span style="color:#a6e22e">NODEJS_14_X&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">code&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">Code&lt;/span>.&lt;span style="color:#a6e22e">fromAsset&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;lambda&amp;#34;&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">handler&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update-orders.main&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 5. Criar uma REST API Gateway
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">api&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">RestApi&lt;/span>(&lt;span style="color:#66d9ef">this&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;orders-api&amp;#34;&lt;/span>, {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">restApiName&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;OrdersService&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">description&lt;/span>&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#e6db74">&amp;#34;REST API Gateway pra Orders&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> });
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 6. Integration
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">getOrdersIntegration&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">LambdaIntegration&lt;/span>(&lt;span style="color:#a6e22e">handlerGet&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">postOrdersIntegration&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">LambdaIntegration&lt;/span>(&lt;span style="color:#a6e22e">handlerPost&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">deleteOrdersIntegration&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">LambdaIntegration&lt;/span>(&lt;span style="color:#a6e22e">handlerDelete&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">updateOrdersIntegration&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> &lt;span style="color:#a6e22e">LambdaIntegration&lt;/span>(&lt;span style="color:#a6e22e">handlerUpdate&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 7. Associar cada verbo HTTP a sua respectiva função
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">api&lt;/span>.&lt;span style="color:#a6e22e">root&lt;/span>.&lt;span style="color:#a6e22e">addMethod&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;GET&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">getOrdersIntegration&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">api&lt;/span>.&lt;span style="color:#a6e22e">root&lt;/span>.&lt;span style="color:#a6e22e">addMethod&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;POST&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">postOrdersIntegration&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">api&lt;/span>.&lt;span style="color:#a6e22e">root&lt;/span>.&lt;span style="color:#a6e22e">addMethod&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;DELETE&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">deleteOrdersIntegration&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">api&lt;/span>.&lt;span style="color:#a6e22e">root&lt;/span>.&lt;span style="color:#a6e22e">addMethod&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;PUT&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">updateOrdersIntegration&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>com isso, terminamos por agora de criar, registrar e associar as funções lambdas à API Gateway, e vamos fazer um deploy do que fizemos pra ver como fica na AWS, pra fazer o deploy basta executar o comando&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-jsx" data-lang="jsx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">cdk&lt;/span> &lt;span style="color:#a6e22e">deploy&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>- https://lucassan.github.io/2022-07-24-aplicacao-crud-cdk/ -</description></item><item><title>The One with Event-Driven Architecture</title><link>https://lucassan.github.io/2021-06-26-event-driven/</link><pubDate>Sat, 26 Jun 2021 21:56:20 +0300</pubDate><guid>https://lucassan.github.io/2021-06-26-event-driven/</guid><description>Lucas Santos https://lucassan.github.io/2021-06-26-event-driven/ -&lt;p>The Event-Driven Architecture grows in popularity in the last couple years, but how Lambda fits into the event-driven paradigm ?&lt;/p>
+&lt;p>The difference between event-driven and request-driven applications may not be clear in small applications but once your application develop more functionality and handle more traffic, this becomes more apparent.&lt;/p>
+&lt;p>Request-driven application typically use directed commands to coordinate downstream functions to complete an activity and are tightly, meanwhile Event-drive applications create events that are observable by other services and systems, but the event producer is unaware of which consumers, if any, are listening. Typically, there are loosely coupled.&lt;/p>
+&lt;p>Most Lambda-based applications use a combination of AWS services for durably storing data and integrating with other system and services. In these applications, Lambda acts as glue between the services, providing business logic to transform data as it moves between services&lt;/p>
+&lt;p>Building Lambda-based applications follows many of the best practices of building any event-based architecture. A number of development approaches have emerged to help developers create event-driven systems. Event storming, which is an interactive approach to domain-driven design (DDD), is one popular methodology. As you explore the events in your workload, you can group theses as bounded contexts to develop the boundaries of the micro services in your application.&lt;/p>
+&lt;p>Benefits of Event-Driven Architectures&lt;/p>
+&lt;ul>
+&lt;li>Replacing polling and web hooks with events&lt;/li>
+&lt;li>Reducing complexity&lt;/li>
+&lt;li>Improving scalability and extensibility&lt;/li>
+&lt;/ul>
+&lt;p>Trade-off:&lt;/p>
+&lt;ul>
+&lt;li>Variable latency&lt;/li>
+&lt;li>Eventual consistency&lt;/li>
+&lt;li>Returning values to callers&lt;/li>
+&lt;li>Debugging across services and functions&lt;/li>
+&lt;/ul>
+- https://lucassan.github.io/2021-06-26-event-driven/ -</description></item><item><title>The One with Queue Theory</title><link>https://lucassan.github.io/2021-06-06-queue-theory/</link><pubDate>Sun, 06 Jun 2021 15:07:00 +0300</pubDate><guid>https://lucassan.github.io/2021-06-06-queue-theory/</guid><description>Lucas Santos https://lucassan.github.io/2021-06-06-queue-theory/ -&lt;p>Have you ever think about the math behind a Queue ?&lt;/p>
+&lt;p>&lt;em>[I&amp;rsquo;ll assume that you said no, that&amp;rsquo;s why I&amp;rsquo;m posting this]&lt;/em>&lt;/p>
+&lt;p>So, let&amp;rsquo;s talk a little bit about the Queue Theory&lt;/p>
+&lt;p>&lt;em>[Drumrolls begin]&lt;/em>&lt;/p>
+&lt;h2 id="what-its-a-queue-">What its a Queue ?&lt;/h2>
+&lt;p>Its basically a line, or a sequence of anything, awaiting their turn to be attended ot preceed.&lt;/p>
+&lt;h3 id="examples-of-queues">Examples of Queues&lt;/h3>
+&lt;ul>
+&lt;li>Shoppers in a checkout line&lt;/li>
+&lt;li>Patients in a waiting room&lt;/li>
+&lt;li>Lines to use the toilets&lt;/li>
+&lt;li>Lines to use ATM&amp;rsquo;s&lt;/li>
+&lt;/ul>
+&lt;h2 id="so-whats-the-deal-of-queue-theory-">So, whats the deal of Queue Theory ?&lt;/h2>
+&lt;p>Queue Theory is the study of the movement of things through a line, which can be used to design services.&lt;/p>
+&lt;p>The goal is to reduce its adverse impact to &amp;ldquo;Tolerable&amp;rdquo; levels&lt;/p>
+&lt;h2 id="characteristics">Characteristics&lt;/h2>
+&lt;ul>
+&lt;li>Arrival distribution&lt;/li>
+&lt;li>Departure distribution&lt;/li>
+&lt;li>Service channels&lt;/li>
+&lt;li>Service discipline&lt;/li>
+&lt;li>Maximum number of customers allowed in the system&lt;/li>
+&lt;li>Calling source&lt;/li>
+&lt;/ul>
+&lt;h3 id="examples">Examples&lt;/h3>
+&lt;p>A checkin in an airport, where the employee of the Airline is the server.&lt;/p>
+&lt;p>&lt;strong>Service Time:&lt;/strong> Amount of time that the employee would take to serve you.&lt;br>
+&lt;strong>Arrival distribution:&lt;/strong> Poisson distribution (Markov)&lt;br>
+&lt;strong>Queue size:&lt;/strong> Can be finite or infinite&lt;br>
+&lt;strong>Queue discipline:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>FCFS (First Come, First Served)&lt;/li>
+&lt;li>LCFS (Last Come, First Served)&lt;/li>
+&lt;li>Service in Random Order (SRO)&lt;/li>
+&lt;li>General Service Disciplie (GD)&lt;/li>
+&lt;li>Priority (P)&lt;/li>
+&lt;/ul>
+&lt;h3 id="attitude">Attitude&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>Jockeying:&lt;/strong> When the customer enter one line and then switches to a different one in an effort to reduce the waiting line&lt;/li>
+&lt;li>&lt;strong>Balking:&lt;/strong> The customer decides to not enter the waiting line&lt;/li>
+&lt;li>&lt;strong>Reneging:&lt;/strong> The customer enter the line but decides to leave before being served&lt;/li>
+&lt;/ul>
+&lt;h3 id="kendall-notation">Kendall Notation&lt;/h3>
+&lt;p>&lt;code>(a/b/c) : (d/e/f)&lt;/code>&lt;/p>
+&lt;p>&lt;strong>a:&lt;/strong> Arrival distribution&lt;/p>
+&lt;ul>
+&lt;li>&lt;em>M = Poisson arrival&lt;/em>&lt;/li>
+&lt;li>&lt;em>D = Deterministic arrival&lt;/em>&lt;/li>
+&lt;li>&lt;em>Ek = Erlangian/Gamma arrival&lt;/em>&lt;/li>
+&lt;li>&lt;em>GI = General Independent distribution&lt;/em>&lt;/li>
+&lt;li>&lt;em>G = General distribution&lt;/em>&lt;br>
+&lt;strong>b:&lt;/strong> Departure Distribution&lt;/li>
+&lt;li>&lt;em>Number of servers&lt;/em>&lt;br>
+&lt;strong>d:&lt;/strong> Services Disciplines&lt;/li>
+&lt;li>&lt;em>FCFS - LCFS - SRO - GD&lt;/em>&lt;br>
+&lt;strong>e:&lt;/strong> Maximum number of customers allowed in the system&lt;/li>
+&lt;li>&lt;em>finite or infinite&lt;/em>&lt;br>
+&lt;strong>f:&lt;/strong> Calling source&lt;/li>
+&lt;li>&lt;em>finite or infinte&lt;/em>&lt;/li>
+&lt;/ul>
+&lt;h3 id="symbols">Symbols&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>ƛ&lt;/strong>: &lt;em>Arrival rate&lt;/em>&lt;/li>
+&lt;li>&lt;strong>𝜇&lt;/strong>: &lt;em>Service rate per busy server&lt;/em>&lt;br>
+⍴: ƛ / 𝜇&lt;br>
+&lt;em>Utilization factor&lt;/em>&lt;/li>
+&lt;li>&lt;strong>n&lt;/strong>: &lt;em>Number of units in the system&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Pn(t)&lt;/strong>: &lt;em>Probability of exactly n customers in the system at time t&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Pn&lt;/strong>: &lt;em>Probability of exactly n customers in the system&lt;/em>&lt;/li>
+&lt;li>&lt;strong>c&lt;/strong>: &lt;em>Number of parallel servers&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Ws&lt;/strong>: &lt;em>Expected waiting time per customer in the system&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Wq&lt;/strong>: &lt;em>Expected waiting time per customer in the queue&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Ls&lt;/strong>: &lt;em>Expected number of customers in the system&lt;/em>&lt;/li>
+&lt;li>&lt;strong>Lq&lt;/strong>: &lt;em>Expected number of customers in the queue&lt;/em>&lt;/li>
+&lt;/ul>
+&lt;h3 id="exercise">Exercise&lt;/h3>
+&lt;p>A Checkin flow of an airline company has one employee which can serve 6 customers per hour. Customers arrive at the airline company at a rate of 10 per hour which is exponentially distributed.&lt;/p>
+&lt;p>&lt;strong>(a/b/c) : (d/e/f)&lt;/strong>&lt;br>
+&lt;strong>(M/M/1) : (FCFS / infinite / infinite)&lt;/strong>&lt;br>
+M: distributed (Markov)&lt;br>
+M: distributed (Markov)&lt;br>
+1: we have only one employee, so 1&lt;br>
+FCFS: First Come, First Served&lt;br>
+infinite: entire population&lt;/p>
+&lt;p>&lt;strong>ƛ = Arrival rate&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>10 customers / 60 mins
+= 1 customer / 6 min
+(1 customer arrive every 6 min)
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>𝜇 = Service rate per busy server&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>6 customers / 60 min
+= 1 customers / 10 min
+(1 customer would be served for 10 min)
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>Utilization factor&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>⍴ = ƛ / 𝜇
+0.60
+(60%)
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>Ws: Expected waiting time per customer in the system&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>(1 / 𝜇 - ƛ)
+= (1 / 10 - 6)
+= 0.25 hrs (15 min)
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>Wq: Expected waiting time per customer in the queue&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>(ƛ / 𝜇(𝜇 - ƛ))
+= (6 / 10(10 - 6))
+= 0.15 hrs
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>Ls: Expected number of customers in the system&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>(ƛ / (𝜇 - ƛ))
+= (6 / (10 - 6))
+= 2 customers
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>Lq: Expected number of customers in the queue&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>(ƛ*ƛ / 𝜇(𝜇 - ƛ))
+= (36 / 10(10 - 6))
+= 1 customer
+&lt;/code>&lt;/pre>&lt;p>&lt;em>Any questions, opinions or insults !? ;)&lt;/em>&lt;/p>
+- https://lucassan.github.io/2021-06-06-queue-theory/ -</description></item><item><title>The One with Event Loop in Javascript</title><link>https://lucassan.github.io/2020-06-24-event-loop/</link><pubDate>Wed, 24 Jun 2020 00:00:00 +0300</pubDate><guid>https://lucassan.github.io/2020-06-24-event-loop/</guid><description>Lucas Santos https://lucassan.github.io/2020-06-24-event-loop/ -&lt;p>In this post, I&amp;rsquo;d like to share my talk at Nerdzão Meetup about Event Loop in Javascript, I hope you enjoy it! =)&lt;/p>
+&lt;p>&lt;a href="http://www.youtube.com/watch?v=1bv0l8qh3iI">&lt;img src="http://img.youtube.com/vi/1bv0l8qh3iI/0.jpg" alt="Nerdzão PT #11 - A world in Sync, Async and Serverless">&lt;/a>&lt;/p>
+- https://lucassan.github.io/2020-06-24-event-loop/ -</description></item><item><title>The One with Var, Let and Const</title><link>https://lucassan.github.io/2020-04-29-var-let-const/</link><pubDate>Wed, 29 Apr 2020 21:15:20 +0300</pubDate><guid>https://lucassan.github.io/2020-04-29-var-let-const/</guid><description>Lucas Santos https://lucassan.github.io/2020-04-29-var-let-const/ -&lt;p>&lt;em>[May I have your attention please]&lt;/em>&lt;/p>
+&lt;p>Before we start to talk (or write) about the difference between Var, Let and Const, we need to know two main concepts called Scope and Block, and to explain this I need your full atention please.&lt;/p>
+&lt;h2 id="so-what-is-scope-">So, what is Scope ?&lt;/h2>
+&lt;p>Scope means where a declared variable is available for use.&lt;/p>
+&lt;p>There it is! I told ya, very complicated isn&amp;rsquo;t !? ;)&lt;/p>
+&lt;h2 id="what-about-block-">What about Block ?&lt;/h2>
+&lt;p>A block is chunk of code bounded by curly braces&lt;/p>
+&lt;p>Easy like that!&lt;/p>
+&lt;p>So, let&amp;rsquo;s talk (or write) about declaration of variables&lt;/p>
+&lt;h2 id="var">VAR&lt;/h2>
+&lt;p>&lt;em>[This one is not about the Video Assistant Referee]&lt;/em>&lt;/p>
+&lt;p>So, what is the scope of var ?&lt;/p>
+&lt;p>&lt;code>var&lt;/code> can be &lt;strong>Globally Scoped&lt;/strong> or &lt;strong>Function Scoped&lt;/strong>.&lt;/p>
+&lt;p>&lt;strong>Globally Scoped&lt;/strong> when declared outside of a function, i.e., we can access this variable in the window. (don&amp;rsquo;t worry, we gonna see it later)&lt;/p>
+&lt;p>&lt;strong>Funcion Scoped&lt;/strong> when declared inside a function, i.e., we can access this variable only inside the function&lt;/p>
+&lt;p>Lets take a look at the code bellow&lt;/p>
+&lt;pre tabindex="0">&lt;code>var name = &amp;#34;lucas&amp;#34;
+function foo() {
+var hey = &amp;#34;hey&amp;#34;
+}
+console.log(window.name) // &amp;#34;Lucas&amp;#34;
+console.log(window.hey) // undefined
+&lt;/code>&lt;/pre>&lt;p>as I said before, the variable declared as name, is &lt;strong>Globally Scoped&lt;/strong> and can be seen through the &lt;code>window&lt;/code> as you can see in the console.log&lt;/p>
+&lt;h2 id="let">LET&lt;/h2>
+&lt;p>let is block scoped, i.e. lives inside curly braces. So a variable declared using let, inside a block with the let is only available for use inside that block.&lt;/p>
+&lt;p>Let&amp;rsquo;s take a look at the code bellow&lt;/p>
+&lt;pre tabindex="0">&lt;code>let name = &amp;#34;lucas&amp;#34;;
+if (true) {
+let hey = &amp;#34;hey&amp;#34;
+console.log(hey) // &amp;#34;hey&amp;#34;
+}
+console.log(hey) // hey is not defined
+&lt;/code>&lt;/pre>&lt;p>We see that using hey outside its block (the curly braces where it was defined) returns an error. This is because let variables are block scoped.&lt;/p>
+&lt;h2 id="const">CONST&lt;/h2>
+&lt;p>const are block scoped and cant be updated&lt;/p>
+&lt;p>When you set a value to a variable declared with const, it can&amp;rsquo;t be updated, and will remain the same inside its scope.&lt;/p>
+&lt;pre tabindex="0">&lt;code>const hey = &amp;#34;Hey you!&amp;#34;
+hey = &amp;#34;ops I cant do that&amp;#34; // error : Assignment to constant variable.
+&lt;/code>&lt;/pre>&lt;p>But, how it works when the const variable has an object ?&lt;/p>
+&lt;p>Well, the const itself can&amp;rsquo;t be updated, but the properties of this object can!&lt;/p>
+&lt;p>Let&amp;rsquo;s see it&lt;/p>
+&lt;pre tabindex="0">&lt;code>const user = {
+name : &amp;#34;lucas&amp;#34;,
+city: &amp;#34;Porto&amp;#34;
+}
+user.name = &amp;#34;lucas germano&amp;#34;;
+&lt;/code>&lt;/pre>&lt;p>So, any questions, opinions, insults !? ;)&lt;/p>
+- https://lucassan.github.io/2020-04-29-var-let-const/ -</description></item><item><title>The One with Shallow Copy and Deep Copy</title><link>https://lucassan.github.io/2020-04-19-shallow-copy-deep-copy/</link><pubDate>Sun, 19 Apr 2020 13:32:20 +0300</pubDate><guid>https://lucassan.github.io/2020-04-19-shallow-copy-deep-copy/</guid><description>Lucas Santos https://lucassan.github.io/2020-04-19-shallow-copy-deep-copy/ -&lt;p>Have you ever wonder how objects are cloned or copied ?&lt;/p>
+&lt;p>&lt;em>[I&amp;rsquo;ll assume that you said no]&lt;/em>&lt;/p>
+&lt;p>So, let me introduce you how a Shallow Copy and a Deep Copy works and the difference between them&lt;/p>
+&lt;p>&lt;em>[Drumrolls begin]&lt;/em>&lt;/p>
+&lt;h2 id="shallow-copy">Shallow Copy&lt;/h2>
+&lt;p>It basically get the reference from the source object and put into the target object.
+Think about it as a copy of the source object address. So, the addresses of the source object and target object will be the same i.e. they will be pointing to the same memory location.&lt;/p>
+&lt;h2 id="deep-copy">Deep Copy&lt;/h2>
+&lt;p>It basically makes a copy of all the members of the source object, allocates different memory locations for the target object and then assigns the copied members to this target object to achieve deep copy. In this way, if the source object vanishes, the target object still valid in the memory.&lt;/p>
+&lt;h3 id="example-shallow-copy">Example Shallow Copy:&lt;/h3>
+&lt;pre tabindex="0">&lt;code>const sourceObj = {
+name: ‘Lucas’,
+age: 31,
+};
+const target = sourceObj;
+&lt;/code>&lt;/pre>&lt;p>If we change a value:&lt;/p>
+&lt;p>&lt;code>sourceObj.name = ‘Amanda’;&lt;/code>&lt;/p>
+&lt;p>This statement will also change name from target, since we have a shallow copy, or a reference to sourceObj. This means, you’re losing the original data as well.
+But, creating a brand new variable by using the properties from the original sourceObj variable, you can create a deep copy.&lt;/p>
+&lt;pre tabindex="0">&lt;code>const target = {
+name: sourceObj.name,
+age: sourceObj.age,
+};
+&lt;/code>&lt;/pre>&lt;p>Now if you change target.name, it will only affect target and not sourceObj.&lt;/p>
+&lt;p>&lt;img src="%7B%7Bsite.baseurl%7D%7D/assets/img/shallow_deep_copy.png" alt="Shallow">&lt;/p>
+&lt;p>But I think we can go further in this explanation if we think about primitives types in Javascript.&lt;/p>
+&lt;p>What are the primitive types in Javascript !?&lt;/p>
+&lt;p>Well we can say that primitive types in Javascript are&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>number&lt;/code>&lt;/li>
+&lt;li>&lt;code>string&lt;/code>&lt;/li>
+&lt;li>&lt;code>boolean&lt;/code>&lt;/li>
+&lt;li>&lt;code>null&lt;/code>&lt;/li>
+&lt;li>&lt;code>undefined&lt;/code>&lt;/li>
+&lt;li>&lt;code>Symbol&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;p>All the others data types in Javascript are objects, like&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>Objects&lt;/code>&lt;/li>
+&lt;li>&lt;code>Functions&lt;/code>&lt;/li>
+&lt;li>&lt;code>Arrays&lt;/code>&lt;/li>
+&lt;li>&lt;code>Regex&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;p>Two rules over here:&lt;/p>
+&lt;ol>
+&lt;li>Primitives types are passed by value, and are immutable.&lt;/li>
+&lt;li>Object are passed by reference, and are mutables.&lt;/li>
+&lt;/ol>
+&lt;p>So, if you make something like&lt;/p>
+&lt;pre tabindex="0">&lt;code>const object1 = {}
+const object2 = {}
+console.log(object1 === object2) // false
+&lt;/code>&lt;/pre>&lt;p>this is happening because when you create a constant with &lt;code>{}&lt;/code>, this will make Javascript allocate a piece of memory to it. So object1 has a piece of memory, and object2 has another piece of memory, so they are two different objects, and then when you ask if object1 is equal to object2, the answer is false.&lt;/p>
+&lt;p>And now, if you make something like&lt;/p>
+&lt;pre tabindex="0">&lt;code>const object1 = {}
+const object2 = object1
+console.log(object1 === object2) // true
+&lt;/code>&lt;/pre>&lt;p>this one will be true because object2 has a reference to object1 memory address (like we saw in Shallow Copy).&lt;/p>
+&lt;p>&lt;em>Any questions, opinions or insults !? ;)&lt;/em>&lt;/p>
+- https://lucassan.github.io/2020-04-19-shallow-copy-deep-copy/ -</description></item></channel></rss>
