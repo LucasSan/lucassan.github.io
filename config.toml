@@ -1,0 +1,4 @@
+baseURL = 'https://lucassan.github.io/'
+languageCode = 'en-us'
+title = 'Lucas Santos'
+theme="diary"
